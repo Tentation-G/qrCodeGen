@@ -76,6 +76,8 @@ def qrCode_lib_grid_pdf_gen(couple_dict:dict, file_name:list="qrCode_List", disp
 
     temps_qrCode_dir = "_temp"
     outPut_pdf_dir = "_pdfOut"
+    os.makedirs(temps_qrCode_dir, exist_ok=True)
+    os.makedirs(outPut_pdf_dir, exist_ok=True)
 
     #cols = 6
     #rows = 8
