@@ -1,4 +1,5 @@
 import time
+import random
 
 # -------------------------------- BAR 1 --------------------------------
 
@@ -25,7 +26,7 @@ def print_loading_bar(qrAct:int, nbTotal:int, barLength:int=100) -> None:
 
     wave = wave_window(qrAct, width=8)
     #bar = wave_window(qrAct, width=qrAct) + "-" * empty
-    print(f"\r[{bar}] {wave} {percent:3d}% ({qrAct}/{nbTotal})", end="", flush=True)
+    print(f"\r[{bar}] {wave} {percent:3d}% ({qrAct}/{nbTotal}) [TestBar]", end="", flush=True)
 
 # -----------------------------------------------------------------------
 
@@ -48,11 +49,13 @@ def print_loading_bar2(qrAct:int, nbTotal:int, barLength:int=100) -> None:
     percent = round(progress * 100)
 
     wave = wave_window(qrAct, width=8)
-    print(f"\r[{bar}] {wave} {percent:3d}% ({qrAct}/{nbTotal})", end="", flush=True)
+    print(f"\r[{bar}] {wave} {percent:3d}% ({qrAct}/{nbTotal}) [TestBar]", end="", flush=True)
 # -----------------------------------------------------------------------
 
-max = 73
-for i in range(max):
-    time.sleep(0.25)
+test_val = random.randint(10,1000)
+for i in range(test_val):
+
+
+    time.sleep(random.randint(1, 500) / 1000)
     #time.sleep(0.01)
-    print_loading_bar(i, max)
+    print_loading_bar(i, test_val)

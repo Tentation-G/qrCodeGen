@@ -15,7 +15,6 @@ def wave_window(t: int, width: int = 8) -> str:
     return s[start:start + width]
 
 def print_loading_bar(qrAct:int, nbTotal:int, barLength:int=100) -> None:
-
     qrAct = min(qrAct, nbTotal) + 1
     progress = (qrAct / nbTotal)
 
