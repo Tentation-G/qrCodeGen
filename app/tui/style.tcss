@@ -1,36 +1,57 @@
+/*
 * {
-    border: solid blue;
+    border: round blue;
 }
+*/
+
 $container-border-debug: none;
+$border-color: round $primary;
 
-Screen {
-    layout:grid;
-    grid-size: 1 3; /*1 colonne | 3 lignes */
-    grid-rows: auto 1fr auto;
+Screen {layout: vertical;}
+Header {height: 1;}
+Main   {height: 1fr;}
+Footer {height: 1;}
 
-    border:none;
+Header {border:none;}
+Main   {border:none;}
+Footer {border:none;}
+Container {border: none;}
+
+Container > * {height:100%;}
+
+DirectoryTree,
+DataTable,
+OptionList,
+Header,
+Footer {
+    background: transparent;
+    border: none;
 }
-#main {
+SheetsTables{border: $border-color;}
+ThemePanel{border: $border-color; height: 1fr;}
+
+Main {
     layout: grid;
     grid-size: 2;
     grid-columns: 1fr 4fr;
-    border:none;
-
-    border: $container-border-debug;
 }
 
-#main > * {
+.box-item{
+    border:$border-color;
+}
+
+/*
+Main > * {
     height:100%;
 }
+*/
 
 #sidebar-wrapper {
     layout: grid;
     grid-size: 1 2;
     grid-rows: 1fr auto;
-
-    border: $container-border-debug;
 }
-#sidebar {
+#file-explorer {
     height:100%;
 }
 
@@ -39,8 +60,19 @@ Screen {
     grid-size:1 3;
     grid-rows: 4fr auto 2fr;
 
-    border: $container-border-debug;
+    /*border:solid red;*/
 }
-#content-wrapper > * {
-    height:100%;
+#section1{
+    layout: grid;
+    grid-size:2 1;
+    grid-columns: 6fr 1fr;
+}
+#section2 {
+    layout: grid;
+    grid-size:2 1;
+    grid-columns: 8fr 1fr;
+}
+
+#theme_list {
+    height: 1fr;
 }
