@@ -1,14 +1,29 @@
+import os
+from pathlib import Path
+
 import pandas as pd
 import segno as sg
-import os
-from fpdf import FPDF
-from utils import *
 
-# Excel Extract and Parse
+from fpdf import FPDF
+from io import BytesIO
+
+from .utils import *
+
+import time
+start = time.perf_counter()
+
+BASE_DIR = Path(__file__).resolve().parent
+
 file_path = "data_samples/Liste_comptage_233.xlsx"
 #file_path = "data_samples/ExcelParsingSample.xlsx"
+def xlsx_to_res_des(
+        file_path:str,
+        qr_code_col:str="Reference",
+        lib_col:str="Designation",
+        aimed_sheet:str="Comptage",
+    )->dict[str,str]:
 
-def xlsx_to_res_des(file_path:str, qr_code_col:str="Reference", lib_col:str="Designation", aimed_sheet:str="")->dict[str,str]:
+    #start_xlsx_to_res_des = time.perf_counter()
     # Init le dict
     ref_des_couple_dict = {}
 
@@ -32,40 +47,26 @@ def xlsx_to_res_des(file_path:str, qr_code_col:str="Reference", lib_col:str="Des
                     if pd.notna(reference):
                         ref_des_couple_dict[str(reference)] = str(designation)
     # Return du dict
+    #end_xlsx_to_res_des = time.perf_counter()
+    #print(f"Temps xlsx_to_res_des : {end_xlsx_to_res_des - start_xlsx_to_res_des:.3f} secondes")
     return ref_des_couple_dict
 
-# Todo : Plus tard : Pouvoir passer en param la disposition et la taille des qr code (ex : 20mm, 4x4)
-def qrCode_lib_grid_pdf_gen(couple_dict:dict, file_name:list="qrCode_List", dispo:int=0)->None:
-    """
-        :param: couple_dict: dict -> couple_dict[qrCode] = libéllé_associe
-        :param: file_name: str
-        :param: dispo: int
-
-        :return pdf
-    """
+def qrCode_lib_grid_pdf_gen(couple_dict:dict, file_name:list="qrCode_List", dispo:int=0, need_output:bool=True,)->None:
 
     match dispo:
         case 0: # 12/page
-            cols = 3
-            rows = 4
-            qrCode_size = 40
-            font_size = 9
-            text_spacing = 2
-            text_img_spacing = 2
+            cols, rows = 3, 4
+            qrCode_size, font_size = 40, 9
+            text_spacing, text_img_spacing = 2, 2
         case 1: # 99/page
-            cols = 9 # (6 base + 3 pour stacker)
-            rows = 11 # (8 base + 3 pour stacker) / Limite possible car certains libéllés sont sur 3 lignes
-            qrCode_size = 20
-            font_size = 3.5
-            text_spacing = 1.75
-            text_img_spacing = -2
+            cols, rows = 9, 11
+            qrCode_size, font_size = 20, 3.5
+            text_spacing, text_img_spacing = 1.75, -2
         case 2: # 260/page
-            cols = 13 # (12 base + 1)
-            rows = 20 # (16 base + 4 + 0 pour stacker)
-            qrCode_size = 10
-            font_size = 2
-            text_spacing = 1
-            text_img_spacing = -1.5
+            cols, rows = 13, 20
+            qrCode_size, font_size = 10, 2
+            text_spacing, text_img_spacing = 1, -1.5
+
 
     # ------------ Init var ------------
     pdf = FPDF()
@@ -73,13 +74,10 @@ def qrCode_lib_grid_pdf_gen(couple_dict:dict, file_name:list="qrCode_List", disp
     pdf.set_auto_page_break(False)
     pdf.add_font("Arial", "", r"C:\Windows\Fonts\arial.ttf")
 
-    temps_qrCode_dir = "_temp"
     outPut_pdf_dir = "_pdfOut"
-    os.makedirs(temps_qrCode_dir, exist_ok=True)
     os.makedirs(outPut_pdf_dir, exist_ok=True)
 
-    #cols = 6
-    #rows = 8
+
     total_item_per_page = cols * rows
 
     w_margin = 0
@@ -90,54 +88,65 @@ def qrCode_lib_grid_pdf_gen(couple_dict:dict, file_name:list="qrCode_List", disp
     cell_w = page_w / cols
     cell_h = page_h / rows
 
-    #qrCode_size = 20
-
     font_family = "Arial"
-    #font_size = 4
     text_align = "C"
     # ----------------------------------
-    clean_temp_qr("_temp")
 
     for i, (ref, des) in enumerate(couple_dict.items()):
-        # Si nb par page atteind -> nouvelle page
         if i > 0 and i % total_item_per_page == 0:
             pdf.add_page()
             pdf.set_auto_page_break(False)
 
-        # id de l'item sur sa page [0-total_item_per_page]
         item_id_page = i % total_item_per_page
-
         col = item_id_page % cols
         row = item_id_page // cols
 
         coord_x = w_margin + col * cell_w
-        coord_y = h_margin + row * cell_h #- 2
+        coord_y = h_margin + row * cell_h
+
         pdf.rect(coord_x, coord_y, cell_w, cell_h)
 
-        # Gen QrCode
-        qr_code_img_name = os.path.join(temps_qrCode_dir, f"_temp_qr_p{i}.png")
-        sg.make(ref).save(qr_code_img_name, scale=6)
+        # QR code en mémoire (PNG)
+        buf = BytesIO()
+        sg.make(ref).save(buf, kind="png", scale=6, border=2)
+        buf.seek(0)
 
-        pdf.image(qr_code_img_name, coord_x + (cell_w - qrCode_size) / 2, coord_y + 0.5, qrCode_size)
+        pdf.image(
+            buf,
+            coord_x + (cell_w - qrCode_size) / 2,
+            coord_y + 0.5,
+            qrCode_size
+        )
 
-        # del du png du qr code temp
-        #print(f"qrCode {i}/{len(couple_dict)}.")
-        print_loading_bar(i, len(couple_dict))
-        os.remove(qr_code_img_name)
+        print_loading_bar(i, len(couple_dict), barLib="Creation du pdf")
 
-        # Texte
-        pdf.set_xy(coord_x + 3, coord_y + text_img_spacing-1.5 + qrCode_size + 3)
-
+        pdf.set_xy(coord_x + 3, coord_y + text_img_spacing - 1.5 + qrCode_size + 3)
         pdf.set_font(font_family, size=font_size)
         pdf.multi_cell(cell_w - 6, text_spacing, des, align=text_align)
 
-    # Output File + Name
-    complete_file_name = f"{file_name}TNS9.6.8.2.6D1.pdf"
-    pdf.output(os.path.join(outPut_pdf_dir,complete_file_name))
+    complete_file_name = f"{file_name}SpeedTest-2.4.pdf"
+
+    if need_output:
+        pdf.output(os.path.join(outPut_pdf_dir, complete_file_name))
+
     print(f"\n Process <{complete_file_name}> finished")
 
-couple_dict = xlsx_to_res_des(file_path=file_path, aimed_sheet="Comptage")
-qrCode_lib_grid_pdf_gen(couple_dict, dispo=1)
+if __name__ == "__main__":
+    couple_dict = xlsx_to_res_des(file_path=file_path)
+    qrCode_lib_grid_pdf_gen(couple_dict, dispo=1, need_output=True,)
+
+    #qrCodeGen(couple_dict)
+    #clean_temp_qr("_temp")
+
+    end = time.perf_counter()
+    print(f"Temps Total : {end - start:.3f} secondes")
+
+
+
+
+
+
+
 
 
 

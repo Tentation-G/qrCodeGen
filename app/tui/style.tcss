@@ -65,7 +65,7 @@ Main > * {
 #section1{
     layout: grid;
     grid-size:2 1;
-    grid-columns: 6fr 1fr;
+    grid-columns: 4fr 1fr;
 }
 #section2 {
     layout: grid;

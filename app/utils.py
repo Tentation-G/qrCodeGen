@@ -1,12 +1,6 @@
-import os
-import glob
 
-def clean_temp_qr(folder="_temp"):
-    if not os.path.isdir(folder):
-        return
 
-    for file in glob.glob(os.path.join(folder, "*.png")):
-        os.remove(file)
+
 
 def wave_window(t: int, width: int = 8) -> str:
     WAVE = "▁▂▃▄▅▆▇█▇▆▅▄▃▂▁"
@@ -14,7 +8,7 @@ def wave_window(t: int, width: int = 8) -> str:
     start = t % len(WAVE)
     return s[start:start + width]
 
-def print_loading_bar(qrAct:int, nbTotal:int, barLength:int=100) -> None:
+def print_loading_bar(qrAct:int, nbTotal:int, barLength:int=100, barLib:str="") -> None:
     qrAct = min(qrAct, nbTotal) + 1
     progress = (qrAct / nbTotal)
 
@@ -30,7 +24,7 @@ def print_loading_bar(qrAct:int, nbTotal:int, barLength:int=100) -> None:
 
     wave = wave_window(qrAct, width=8)
     #bar = wave_window(qrAct, width=qrAct) + "-" * empty
-    print(f"\r[{bar}] {wave} {percent:3d}% ({qrAct}/{nbTotal})", end="", flush=True)
+    print(f"\r[{bar}] {wave} {percent:3d}% ({qrAct}/{nbTotal}) [{barLib}]", end="", flush=True)
 
 def print_couple_dict(ref_des_couple_dict):
     # Max len for format spacing
