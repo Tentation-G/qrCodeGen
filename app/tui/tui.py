@@ -1,10 +1,12 @@
 from pathlib import Path
 import pandas as pd
+from rich.text import Text
 
 from textual.app import App, ComposeResult
-from textual.widgets import Static, DirectoryTree, DataTable, Header, Footer, OptionList
-from textual.containers import Container
+from textual.widgets import Static, DirectoryTree, DataTable, Header, Footer, OptionList, Button
+from textual.containers import Container, Horizontal, Vertical
 
+from app.utils import format_loading_bar
 from app import main
 couple_dict = main.xlsx_to_res_des(file_path="app/data_samples/ExcelParsingSample.xlsx")
 
@@ -13,9 +15,21 @@ class FileExplorer(DirectoryTree):
     DEFAULT_CLASSES = "box-item"
     BORDER_TITLE = "File Explorer"
 
-    ICON_FILE = "[F] "
-    ICON_DIR = "D "
-    ICON_DIR_OPEN = "D> "
+    ICON_FILE = "{f} "
+    ICON_DIR = "[D] "
+    ICON_DIR_OPEN = "[D} "
+
+    def render_label(self, node, base_style, style):
+        # node.label = nom "nu" (sans icône) dans beaucoup de versions
+        name = node.label.plain if hasattr(node.label, "plain") else str(node.label)
+
+        path = node.data.path
+        if path.is_dir():
+            icon = self.ICON_DIR_OPEN if node.is_expanded else self.ICON_DIR
+        else:
+            icon = self.ICON_FILE
+
+        return Text(icon + name, style=style)
 """
 class FileExplorer(ComposeResult):
     #DEFAULT_CLASSES = "box-item"
@@ -54,14 +68,43 @@ class LogsPanel(Container):
         yield Static("Logs", id="logs")
 # ------------------------------------------------------- #
 
+class LoadingBar(Container):
+    BORDER_TITLE = "Loading Bar"
+    DEFAULT_CLASSES = "box-item"
+
+    def compose(self) -> ComposeResult:
+        yield Static("", id="loading_text")
+
+    def on_mount(self) -> None:
+        self.current = 0
+        self.total = 0
+
+        self.call_after_refresh(self.render_bar)
+
+    def on_resize(self) -> None:
+        self.render_bar()
+
+    def bar_width(self) -> int:
+        width = self.content_size.width
+        return max(1, int(width - 26))
+
+    def render_bar(self) -> None:
+        width = self.bar_width()
+        text = format_loading_bar(self.current, self.total, barLength=width)
+        self.query_one("#loading_text", Static).update(text)
+
 # -------------------- Main - Content ------------------- #
 class Content(Container):
     BORDER_TITLE = "Content Section"
     DEFAULT_CLASSES = "box-item"
 
     def compose(self) -> ComposeResult:
-        yield OptionList(id="columns_list")
+        with Vertical():
+            yield OptionList(id="columns_list")
+            yield Button("Default", id="btn_default")
 
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        main.qrCode_lib_grid_pdf_gen(couple_dict, dispo=1, need_output=False, )
 
     def on_mount(self) -> None:
         option_list = self.query_one("#columns_list", OptionList)
@@ -79,11 +122,6 @@ class Content(Container):
 class Main(Container):
     def compose(self) -> ComposeResult:
         with Container(id="sidebar-wrapper"):
-            """
-            tree = DirectoryTree("/", classes="box-item")
-            tree.border_title = "File Explorer"
-            yield tree
-            """
             yield FileExplorer("/")
 
             file_select = Static("", classes="box-item")
@@ -97,9 +135,7 @@ class Main(Container):
                 yield LogsPanel()
 
             with Container(id="section2"):
-                loading_bar = Static("", id="loading-bar", classes="box-item")
-                loading_bar.border_title = "Loading Bar"
-                yield loading_bar
+                yield LoadingBar()
 
                 file_picker = Static("", id="File-Picker", classes="box-item")
                 file_picker.border_title = "File-Picker"

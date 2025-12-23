@@ -26,6 +26,23 @@ def print_loading_bar(qrAct:int, nbTotal:int, barLength:int=100, barLib:str="") 
     #bar = wave_window(qrAct, width=qrAct) + "-" * empty
     print(f"\r[{bar}] {wave} {percent:3d}% ({qrAct}/{nbTotal}) [{barLib}]", end="", flush=True)
 
+def format_loading_bar(qrAct: int, nbTotal: int, barLength: int = 100) -> str:
+    #qrAct -> avancement
+    qrAct = min(qrAct, nbTotal - 1)
+
+    progress = (qrAct + 1) / nbTotal if nbTotal else 0
+
+    filled = int(barLength * progress)
+    empty = barLength - filled
+    bar = ("█" * filled) + ("░" * empty)
+
+    percent = round(progress * 100)
+
+    wave = wave_window(qrAct, width=8) if qrAct > 0 else " "*8
+
+    #return f"[{bar}] {wave} {percent:3d}% ({qrAct+1:3d}/{nbTotal:3d})"
+    return f"[{bar}] {wave} {percent:3d}% ({qrAct+1}/{nbTotal})"
+
 def print_couple_dict(ref_des_couple_dict):
     # Max len for format spacing
     max_len = max(len(k) for k in ref_des_couple_dict)

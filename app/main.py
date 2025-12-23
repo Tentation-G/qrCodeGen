@@ -124,7 +124,7 @@ def qrCode_lib_grid_pdf_gen(couple_dict:dict, file_name:list="qrCode_List", disp
         pdf.set_font(font_family, size=font_size)
         pdf.multi_cell(cell_w - 6, text_spacing, des, align=text_align)
 
-    complete_file_name = f"{file_name}SpeedTest-2.4.pdf"
+    complete_file_name = f"{file_name}SpeedTest-2.4.T1pdf"
 
     if need_output:
         pdf.output(os.path.join(outPut_pdf_dir, complete_file_name))
@@ -133,7 +133,7 @@ def qrCode_lib_grid_pdf_gen(couple_dict:dict, file_name:list="qrCode_List", disp
 
 if __name__ == "__main__":
     couple_dict = xlsx_to_res_des(file_path=file_path)
-    qrCode_lib_grid_pdf_gen(couple_dict, dispo=1, need_output=True,)
+    qrCode_lib_grid_pdf_gen(couple_dict, dispo=1, need_output=False,)
 
     #qrCodeGen(couple_dict)
     #clean_temp_qr("_temp")
