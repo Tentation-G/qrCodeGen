@@ -3,8 +3,9 @@ import pandas as pd
 from rich.text import Text
 
 from textual.app import App, ComposeResult
-from textual.widgets import Static, DirectoryTree, DataTable, Header, Footer, OptionList, Button
-from textual.containers import Container, Horizontal, Vertical
+from textual.theme import Theme
+from textual.widgets import Static, DirectoryTree, DataTable, Header, Footer, OptionList, Button, Input
+from textual.containers import Container, Vertical
 
 from app.utils import format_loading_bar
 from app import main
@@ -86,7 +87,7 @@ class LoadingBar(Container):
 
     def bar_width(self) -> int:
         width = self.content_size.width
-        return max(1, int(width - 26))
+        return max(1, int(width - 28))
 
     def render_bar(self) -> None:
         width = self.bar_width()
@@ -100,22 +101,18 @@ class Content(Container):
 
     def compose(self) -> ComposeResult:
         with Vertical():
-            yield OptionList(id="columns_list")
-            yield Button("Default", id="btn_default")
+            yield Static("Chemin du fichier Excel :", classes="label")
+            yield Input(placeholder="app/data_samples/file.xlxs", id="input_file")
 
-    def on_button_pressed(self, event: Button.Pressed) -> None:
-        main.qrCode_lib_grid_pdf_gen(couple_dict, dispo=1, need_output=False, )
+            yield Static("Chemin de sortie :", classes="label")
+            yield Input(placeholder="app/_pdfOut/", id="input_output")
 
-    def on_mount(self) -> None:
-        option_list = self.query_one("#columns_list", OptionList)
-
-        df = getattr(self.app, "df", None)
-        if df is None:
-            option_list.add_option("Aucune donnée")
-            return
-
-        for col in df.columns:
-            option_list.add_option(str(col))
+"""
+    def compose(self) -> ComposeResult:
+        with Vertical():
+            yield Input(placeholder="Chemin d'acces fichier")
+            yield Input(placeholder="Chemin de sortie fichier")
+"""
 # ------------------------------------------------------- #
 
 # ------------------------ Main ------------------------- #
@@ -152,7 +149,25 @@ class LayoutQrCodeGen(App):
     BINDINGS = [
         ("ctrl+q", "quit", "Quitter l'application"),
         ("ctrl+t", "change_theme", "Changer de theme"),
+
+        ("ctrl+f", "focus_input_file", "Focus Input I"),
+        ("ctrl+o", "focus_output_file", "Focus Input O"),
     ]
+
+    def on_key(self, event):
+        if event.key == "escape" and isinstance(self.focused, Input):
+            self.set_focus(None)
+
+    def action_focus_input_file(self) -> None:
+        self.query_one("#input_file", Input).focus()
+
+    def action_focus_output_file(self) -> None:
+        self.query_one("#input_output", Input).focus()
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.input_path = ""
+        self.output_path = ""
 
     def compose(self) -> ComposeResult:
         yield Header()
@@ -161,7 +176,45 @@ class LayoutQrCodeGen(App):
     def on_mount(self) -> None:
         self.title = "qrCodeGen"
         self.sub_title = "Alpha 0.1"
+
+        self.register_theme(wilo_corp_theme)
+
+        #self.theme = "WiloCorporate"
+        self.theme = "dracula"
 # ------------------------------------------------------- #
+
+wilo_corp_theme = Theme(
+    name="WiloCorporate",
+    # Couleurs "brand"
+    primary="#009C82",    # WiloGreen (R0 G156 B130)
+    secondary="#005ACD",  # WaterBlue (R0 G90 B205)
+    accent="#FFB400",     # TechniCYellow (R255 G180 B0)
+
+    # Lisibilité / base
+    foreground="#FFFFFF", # ClearWhite
+    background="#202020", # GunMetal-Mod (R32 G32 B32)
+
+    # États
+    success="#AAC800",    # NaturalGreen (R170 G200 B0)
+    warning="#FFB400",    # TechniCYellow
+    error="#F54100",      # VitalRed (R245 G65 B0)
+
+    # Surfaces UI (cartes/panels)
+    surface="#787878",    # CoolGrey (R120 G120 B120)
+    panel="#202020",      # GunMetal (cohérent en dark)
+
+    dark=True,
+    variables={
+        # Confort de lecture / interactions
+        "block-cursor-text-style": "none",
+        "footer-key-foreground": "#FFB400",          # TechniCYellow
+        "input-selection-background": "#005ACD 35%", # WaterBlue à 35%
+        "link-color": "#005ACD",                     # liens
+        "warning-text": "#FFB400",
+        "error-text": "#F54100",
+        "success-text": "#AAC800",
+    },
+)
 
 if __name__ == "__main__":
     LayoutQrCodeGen().run()
